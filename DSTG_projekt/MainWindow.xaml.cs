@@ -1,4 +1,5 @@
-﻿    using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
     using System.Windows;
     using System.Windows.Controls;
 
@@ -15,6 +16,7 @@
             }
 
             private string? Filepath { get; set; }
+        private CSharpLoopAnalyzer cSharp { get; set; }
 
             public Dictionary<string, string> langExtPairs = new Dictionary<string, string>();
 
@@ -23,41 +25,48 @@
             public List<string> javaScriptLoops = new List<string>();
 
         private void btnAnalyze_Click(object sender, RoutedEventArgs e)
+        {
+            FillDictionaryAndLoopTypes();
+
+            string code = File.ReadAllText(Filepath);
+
+            if (txtPath.Text == string.Empty || cmbLanguage.SelectedIndex == -1)
             {
-                FillDictionaryAndLoopTypes();
-
-                var chosenLang = cmbLanguage.SelectedValue.ToString();
-
-                if (txtPath.Text == string.Empty || cmbLanguage.SelectedIndex == -1)
-                {
-                    MessageBox.Show("Učitaj datoteku i odaberi jezik!");
-                    return;
+                MessageBox.Show("Učitaj datoteku i odaberi jezik!");
+                return;
             
-                }
-                else if(langExtPairs[cmbLanguage.SelectedValue.ToString()] != Path.GetExtension(Filepath))
-                {
-                    MessageBox.Show($"Odabrani jezik i tip datoteke se ne poklapaju! {langExtPairs[chosenLang]} - {Path.GetExtension(Filepath)}");
-                    return;
-                }
-                else
-                {
-                    if (chosenLang == "Python")
-                    {
-
-                    }
-                    else if (chosenLang == "C#")
-                    {
-
-                    }
-                    else
-                    {
-                        //JavaScript
-
-
-                    }
-                }
-               
             }
+            else if(langExtPairs[cmbLanguage.SelectedValue.ToString()] != Path.GetExtension(Filepath))
+            {
+                var chosenLang = cmbLanguage.SelectedValue.ToString();
+                MessageBox.Show($"Odabrani jezik i tip datoteke se ne poklapaju! {langExtPairs[chosenLang]} - {Path.GetExtension(Filepath)}");
+                return;
+            }
+            else
+            {
+                var chosenLang = cmbLanguage.SelectedValue.ToString();
+            if (chosenLang == "Python")
+            {
+                    
+            }
+            else if (chosenLang == "C#")
+            {
+                cSharp = new CSharpLoopAnalyzer();
+                var loops = cSharp.ExtractCSharpLoops(code);
+                cSharp.CategorizeCSharpLoops(loops);
+                cSharp.AnalyzeAllCSharpLoops(chosenLang);
+                cSharp.helperFunctions.CreateMessageBoxLoopsInfo();
+            }
+            else
+
+            {
+                //JavaScript
+
+
+            }
+        }
+               
+        }
 
             private void btnSelectDocument_Click(object sender, RoutedEventArgs e)
             {
