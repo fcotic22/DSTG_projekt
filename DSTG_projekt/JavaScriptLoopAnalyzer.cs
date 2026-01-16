@@ -214,7 +214,6 @@ namespace DSTG_projekt
 
                 string trimmedLine = line.Trim();
 
-                // Prepoznaj deklaracije varijabli: let/const/var varijabla = ...
                 var assignmentMatch = Regex.Match(trimmedLine, @"(?:let|const|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=");
                 if (assignmentMatch.Success)
                 {
@@ -224,8 +223,6 @@ namespace DSTG_projekt
                         variables.Add(varName);
                     }
                 }
-                // Također prepoznaj jednostavne dodjele bez let/const/var (npr. row = ...)
-                // Ali samo ako varijabla nije već deklarirana van petlje
                 else
                 {
                     var simpleAssignment = Regex.Match(trimmedLine, @"^([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=");
@@ -239,8 +236,65 @@ namespace DSTG_projekt
                     }
                 }
 
-                // Ne traži varijable koje se samo koriste - samo one koje su deklarirane unutar petlje
-                // (već su obrađene gore kroz assignmentMatch i simpleAssignment)
+                var funcCalls = Regex.Matches(trimmedLine, @"[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(([^)]*)\)");
+                foreach (Match f in funcCalls)
+                {
+                    var args = f.Groups[1].Value;
+                    var argMatches = Regex.Matches(args, @"\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b");
+                    foreach (Match am in argMatches)
+                    {
+                        string argName = am.Groups[1].Value;
+                        int absIndex = f.Groups[1].Index + am.Index;
+                        char charBefore = '\0';
+                        char charAfter = '\0';
+                        GetPrevNextNonWhitespace(trimmedLine, absIndex, argName.Length, out charBefore, out charAfter);
+                        if (charBefore == '.') continue;
+                        if (charAfter == '.') { variables.Add(argName); continue; }
+                        if (!IsJavaScriptKeyword(argName) && !IsJavaScriptBuiltinFunction(argName) && !IsJavaScriptType(argName) && !char.IsDigit(argName[0]))
+                        {
+                            variables.Add(argName);
+                        }
+                    }
+                }
+
+                var allVarMatches = Regex.Matches(trimmedLine, @"\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b");
+                foreach (Match match in allVarMatches)
+                {
+                    string varName = match.Groups[1].Value;
+
+                    if (IsJavaScriptKeyword(varName) || IsJavaScriptBuiltinFunction(varName) || IsJavaScriptType(varName))
+                        continue;
+
+                    int matchIndex = match.Index;
+                    bool skipVariable = false;
+
+                    char charBefore = '\0';
+                    char charAfter = '\0';
+                    GetPrevNextNonWhitespace(trimmedLine, matchIndex, varName.Length, out charBefore, out charAfter);
+
+                    if (charBefore == '.')
+                    {
+                        skipVariable = true;
+                    }
+                    else if (charAfter == '.')
+                    {
+                        variables.Add(varName);
+                        continue;
+                    }
+
+                    if (!skipVariable)
+                    {
+                        if (charAfter == '(')
+                        {
+                            skipVariable = true;
+                        }
+                    }
+
+                    if (!skipVariable)
+                    {
+                        variables.Add(varName);
+                    }
+                }
             }
 
             if (helperFunctions == null)
