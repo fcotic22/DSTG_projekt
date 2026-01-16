@@ -17,6 +17,7 @@ using System.IO;
 
             private string? Filepath { get; set; }
         private CSharpLoopAnalyzer cSharp { get; set; }
+        private JavaScriptLoopAnalyzer javaScript { get; set; }
 
             public Dictionary<string, string> langExtPairs = new Dictionary<string, string>();
 
@@ -61,8 +62,11 @@ using System.IO;
 
             {
                 //JavaScript
-
-
+                javaScript = new JavaScriptLoopAnalyzer();
+                var loops = javaScript.ExtractJavaScriptLoops(code);
+                javaScript.CategorizeJavaScriptLoops(loops);
+                javaScript.AnalyzeAllJavaScriptLoops(chosenLang);
+                javaScript.helperFunctions.CreateMessageBoxLoopsInfo();
             }
         }
                
