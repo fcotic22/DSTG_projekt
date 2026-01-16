@@ -29,7 +29,7 @@ namespace DSTG_projekt
             var whilePattern = @"while\s*\([^)]*\)";
             var doPattern = @"do\s*\{";
 
-            for (int i = 0; i < lines.Length; i++)
+            for (int i =0; i < lines.Length; i++)
             {
                 string line = lines[i];
                 string trimmedLine = line.Trim();
@@ -99,6 +99,9 @@ namespace DSTG_projekt
                 });
                 loopCounter++;
             }
+
+            if (helperFunctions != null)
+                helperFunctions.CreateMessageBoxLoopsInfo();
         }
 
 
@@ -121,6 +124,12 @@ namespace DSTG_projekt
                     foreach (Match match in headerVars)
                     {
                         string varName = match.Groups[1].Value;
+                        int absIndex = forHeaderMatch.Groups[1].Index + match.Index;
+                        char charBefore = '\0';
+                        char charAfter = '\0';
+                        GetPrevNextNonWhitespace(cleanHeader, absIndex, varName.Length, out charBefore, out charAfter);
+                        if (charBefore == '.') continue;
+                        if (charAfter == '.') { variables.Add(varName); continue; }
                         if (!IsCSharpKeyword(varName) && !IsCSharpBuiltinFunction(varName) && !char.IsDigit(varName[0]))
                         {
                             variables.Add(varName);
@@ -130,10 +139,12 @@ namespace DSTG_projekt
             }
             else if (loop.Type == "foreach")
             {
-                var foreachMatch = Regex.Match(cleanHeader, @"foreach\s*\(\s*(\w+)\s+\w+\s+in");
+                var foreachMatch = Regex.Match(cleanHeader, @"foreach\s*\(\s*(?:[\w<>,\s]+\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s+in");
                 if (foreachMatch.Success)
                 {
-                    variables.Add(foreachMatch.Groups[1].Value);
+                    var varName = foreachMatch.Groups[1].Value;
+                    if (!IsCSharpKeyword(varName) && !IsCSharpBuiltinFunction(varName))
+                        variables.Add(varName);
                 }
             }
             else if (loop.Type == "while")
@@ -145,6 +156,12 @@ namespace DSTG_projekt
                     foreach (Match match in conditionVars)
                     {
                         string varName = match.Groups[1].Value;
+                        int absIndex = conditionMatch.Groups[1].Index + match.Index;
+                        char charBefore = '\0';
+                        char charAfter = '\0';
+                        GetPrevNextNonWhitespace(cleanHeader, absIndex, varName.Length, out charBefore, out charAfter);
+                        if (charBefore == '.') continue;
+                        if (charAfter == '.') { variables.Add(varName); continue; }
                         if (!IsCSharpKeyword(varName) && !IsCSharpBuiltinFunction(varName) && !char.IsDigit(varName[0]))
                         {
                             variables.Add(varName);
@@ -152,6 +169,29 @@ namespace DSTG_projekt
                     }
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(cleanHeader))
+            {
+                var headerParens = Regex.Matches(cleanHeader, @"\(([^)]*)\)");
+                foreach (Match pm in headerParens)
+                {
+                    var content = pm.Groups[1].Value;
+                    var argVars = Regex.Matches(content, @"\b([a-zA-Z_][a-zA-Z0-9_]*)\b");
+                    foreach (Match m in argVars)
+                    {
+                        string name = m.Groups[1].Value;
+                        int absIndex = pm.Groups[1].Index + m.Index;
+                        char charBefore = '\0';
+                        char charAfter = '\0';
+                        GetPrevNextNonWhitespace(cleanHeader, absIndex, name.Length, out charBefore, out charAfter);
+                        if (charBefore == '.') continue;
+                        if (charAfter == '.') { variables.Add(name); continue; }
+                        if (!IsCSharpKeyword(name) && !IsCSharpBuiltinFunction(name) && !IsCSharpType(name) && !char.IsDigit(name[0]))
+                            variables.Add(name);
+                    }
+                }
+            }
+
             var lines = cleanBody.Split('\n');
             foreach (var line in lines)
             {
@@ -182,6 +222,27 @@ namespace DSTG_projekt
                     }
                 }
 
+                var funcCalls = Regex.Matches(trimmedLine, @"[a-zA-Z_][a-zA-Z0-9_]*\s*\(([^)]*)\)");
+                foreach (Match f in funcCalls)
+                {
+                    var args = f.Groups[1].Value;
+                    var argMatches = Regex.Matches(args, @"\b([a-zA-Z_][a-zA-Z0-9_]*)\b");
+                    foreach (Match am in argMatches)
+                    {
+                        string argName = am.Groups[1].Value;
+                        int absIndex = f.Groups[1].Index + am.Index;
+                        char charBefore = '\0';
+                        char charAfter = '\0';
+                        GetPrevNextNonWhitespace(trimmedLine, absIndex, argName.Length, out charBefore, out charAfter);
+                        if (charBefore == '.') continue;
+                        if (charAfter == '.') { variables.Add(argName); continue; }
+                        if (!IsCSharpKeyword(argName) && !IsCSharpBuiltinFunction(argName) && !IsCSharpType(argName) && !char.IsDigit(argName[0]))
+                        {
+                            variables.Add(argName);
+                        }
+                    }
+                }
+
                 var allVarMatches = Regex.Matches(trimmedLine, @"\b([a-zA-Z_][a-zA-Z0-9_]*)\b");
                 foreach (Match match in allVarMatches)
                 {
@@ -192,25 +253,30 @@ namespace DSTG_projekt
 
                     int matchIndex = match.Index;
                     bool skipVariable = false;
-                    if (matchIndex > 0)
+
+                    char charBefore = '\0';
+                    char charAfter = '\0';
+                    GetPrevNextNonWhitespace(trimmedLine, matchIndex, varName.Length, out charBefore, out charAfter);
+
+                    if (charBefore == '.')
                     {
-                        string beforeMatch = trimmedLine.Substring(0, matchIndex).TrimEnd();
-                        if (beforeMatch.EndsWith("."))
+                        skipVariable = true;
+                    }
+                    else if (charAfter == '.')
+                    {
+                        variables.Add(varName);
+                        continue;
+                    }
+
+                    if (!skipVariable)
+                    {
+                        if (charAfter == '(' || charAfter == '[')
                         {
-                            skipVariable = true; 
+                            skipVariable = true;
                         }
                     }
 
-                     if (!skipVariable && matchIndex + match.Length < trimmedLine.Length)
-                    {
-                        string afterMatch = trimmedLine.Substring(matchIndex + match.Length).TrimStart();
-                        if (afterMatch.StartsWith("(") || afterMatch.StartsWith(".") || afterMatch.StartsWith("["))
-                        {
-                            skipVariable = true; 
-                        }
-                    }
-
-                    if (!skipVariable && matchIndex > 0)
+                    if (!skipVariable && matchIndex >0)
                     {
                         string beforeMatch = trimmedLine.Substring(0, matchIndex).TrimEnd();
                         if (Regex.IsMatch(beforeMatch, @"\b(int|string|bool|var|double|float|long|short|byte|char|decimal|List|Dictionary|Array|IEnumerable)\s*$"))
@@ -226,17 +292,35 @@ namespace DSTG_projekt
                 }
             }
 
+            if (helperFunctions == null)
+                helperFunctions = new HelperFunctions();
+
+            foreach (var v in variables)
+                helperFunctions.allVariables.Add(v);
+
             return variables.OrderBy(v => v).ToList();
+        }
+
+        private void GetPrevNextNonWhitespace(string line, int startIndex, int length, out char prev, out char next)
+        {
+            prev = '\0';
+            next = '\0';
+            int prevIdx = startIndex -1;
+            while (prevIdx >=0 && prevIdx < line.Length && char.IsWhiteSpace(line[prevIdx])) prevIdx--;
+            if (prevIdx >=0 && prevIdx < line.Length) prev = line[prevIdx];
+            int nextIdx = startIndex + length;
+            while (nextIdx < line.Length && char.IsWhiteSpace(line[nextIdx])) nextIdx++;
+            if (nextIdx >=0 && nextIdx < line.Length) next = line[nextIdx];
         }
 
         private bool IsCSharpKeyword(string word)
         {
-            string[] keywords = { "if", "else", "for", "while", "foreach", "do", "class", "public", "private", "return", "void", "int", "string", "bool", "var", "let", "const", "break", "continue", "true", "false", "null", "new", "typeof", "goto" };
+            string[] keywords = { "if", "else", "for", "while", "foreach", "do", "class", "public", "private", "return", "void", "int", "string", "bool", "var", "let", "const", "break", "continue", "true", "false", "null", "new", "typeof", "goto", "in", "out", "ref", "async", "await", "partial", "sealed", "readonly", "volatile", "operator", "event", "override", "virtual", "namespace", "using", "get", "set", "add", "remove", "value", "where", "params", "extern", "unsafe", "fixed", "implicit", "explicit", "record", "init" };
             return keywords.Contains(word);
         }
         private bool IsCSharpType(string word)
         {
-            if (char.IsUpper(word[0]) && word.Length > 1)
+            if (char.IsUpper(word[0]) && word.Length >1)
             {
                 string[] commonTypes = { "Match", "Regex", "List", "Dictionary", "Array", "IEnumerable", "HashSet", "Stack", "Queue", "String", "Int32", "Int64", "Double", "Float", "Boolean", "Object", "LoopInfo", "LoopVariableUsage", "LoopBody", "LoopHeader", "LoopId", "Variables", "Type", "StartLine", "EndLine", "FullText", "Count", "Length", "MessageBox", "MessageBoxButton", "MessageBoxImage", "RoutedEventArgs", "RoutedEvent", "Window", "Control", "TextBox", "ComboBox", "Button", "Label" };
                 if (commonTypes.Contains(word))
@@ -271,14 +355,14 @@ namespace DSTG_projekt
             var lines = body.Split('\n');
             var result = new List<string>();
 
-            for (int i = 0; i < lines.Length; i++)
+            for (int i =0; i < lines.Length; i++)
             {
                 string line = lines[i];
                 string trimmed = line.Trim();
 
                 if (Regex.IsMatch(trimmed, @"^(for|foreach|while|do)\s*"))
                 {
-                    int braceCount = 0;
+                    int braceCount =0;
                     bool foundOpeningBrace = false;
                     i++; 
 
@@ -295,7 +379,7 @@ namespace DSTG_projekt
                             else if (c == '}')
                             {
                                 braceCount--;
-                                if (braceCount == 0 && foundOpeningBrace)
+                                if (braceCount ==0 && foundOpeningBrace)
                                 {
                                     goto nextLine;
                                 }

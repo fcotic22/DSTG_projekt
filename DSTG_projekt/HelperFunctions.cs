@@ -28,6 +28,7 @@ namespace DSTG_projekt
     public class HelperFunctions
     {
         public List<LoopVariableUsage> loopVariableResults = new List<LoopVariableUsage>();
+        public List<string> allVariables = new List<string>();
         public LoopInfo? ExtractBracketedLoop(string[] lines, int startLine, string type)
         {
             int braceCount = 0;
@@ -144,7 +145,26 @@ namespace DSTG_projekt
                     }
                 }
             }
+
+            var distinct = allVariables.Distinct().OrderBy(v => v).ToList();
+            text += "\nSve varijable pronađene u dokumentu:\n\n";
+            if (distinct.Count == 0)
+                text += "Nema pronađenih varijabli.";
+            else
+                text += string.Join("\n", distinct);
+
             MessageBox.Show(text, "Rezultati analize petlji", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        public void CreateMessageBoxAllVariables()
+        {
+            var distinct = allVariables.Distinct().OrderBy(v => v).ToList();
+            string text = "Sve varijable pronađene u dokumentu:\n\n";
+            if (distinct.Count == 0)
+                text += "Nema pronađenih varijabli.";
+            else
+                text += string.Join("\n", distinct);
+            MessageBox.Show(text, "Sve varijable", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }
