@@ -1,33 +1,14 @@
 using System.Diagnostics;
-
-﻿    using System.IO;
-    using System.Text;
-    using System.Text.RegularExpressions;
+using System.IO;
     using System.Windows;
     using System.Windows.Controls;
-    using DSTG_projekt.Services;
 
-namespace DSTG_projekt
+    namespace DSTG_projekt
     {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    /// 
-
-    public class LoopNode
-    {
-        public int Id { get; set; }
-        public string LoopType { get; set; } = "";
-        public HashSet<string> Variables { get; set; } = new();
-    }
-
-
-    public class LoopVariableGraph
-    {
-        public Dictionary<int, LoopNode> Loops { get; set; } = new();
-    }
-
-    public partial class MainWindow : Window
+        /// <summary>
+        /// Interaction logic for MainWindow.xaml
+        /// </summary>
+        public partial class MainWindow : Window
         {
             public MainWindow()
             {
@@ -38,18 +19,17 @@ namespace DSTG_projekt
         private CSharpLoopAnalyzer cSharp { get; set; }
         private JavaScriptLoopAnalyzer javaScript { get; set; }
 
-        public Dictionary<string, string> langExtPairs = new Dictionary<string, string>();
+            public Dictionary<string, string> langExtPairs = new Dictionary<string, string>();
 
-        public List<string> pythonLoops = new List<string>();
-        public List<string> cSharpLoops = new List<string>();
-        public List<string> javaScriptLoops = new List<string>();
+            public List<string> pythonLoops = new List<string>();
+            public List<string> cSharpLoops = new List<string>();
+            public List<string> javaScriptLoops = new List<string>();
 
         private void btnAnalyze_Click(object sender, RoutedEventArgs e)
         {
             FillDictionaryAndLoopTypes();
 
             string code = File.ReadAllText(Filepath);
-            
 
             if (txtPath.Text == string.Empty || cmbLanguage.SelectedIndex == -1)
             {
@@ -60,37 +40,16 @@ namespace DSTG_projekt
             else if(langExtPairs[cmbLanguage.SelectedValue.ToString()] != Path.GetExtension(Filepath))
             {
                 var chosenLang = cmbLanguage.SelectedValue.ToString();
-
                 MessageBox.Show($"Odabrani jezik i tip datoteke se ne poklapaju! {langExtPairs[chosenLang]} - {Path.GetExtension(Filepath)}");
                 return;
             }
             else
             {
                 var chosenLang = cmbLanguage.SelectedValue.ToString();
-
-                if (chosenLang == "Python")
-                {
-                    StringBuilder sb = PythonService.AnalyzePythonCode(Filepath!);
-
-                    MessageBox.Show(sb.ToString(), "Python graf petlja–varijabla");
-                }
-                else if (chosenLang == "C#")
-                {
-                    cSharp = new CSharpLoopAnalyzer();
-                    var loops = cSharp.ExtractCSharpLoops(code);
-                    cSharp.CategorizeCSharpLoops(loops);
-                    cSharp.AnalyzeAllCSharpLoops(chosenLang);
-                    cSharp.helperFunctions.CreateMessageBoxLoopsInfo();
-                }
-                else
-                {
-                    //JavaScript
-
-
-                }
-                }
+            if (chosenLang == "Python")
+            {
+                    
             }
-<<<<<<< HEAD
             else if (chosenLang == "C#")
             {
                 cSharp = new CSharpLoopAnalyzer();
@@ -113,14 +72,8 @@ namespace DSTG_projekt
         }
                
         }
-=======
-           
-      
 
-
->>>>>>> a3a34d16d542dcd1059b40f8db80134c0beb888f
-
-        private void btnSelectDocument_Click(object sender, RoutedEventArgs e)
+            private void btnSelectDocument_Click(object sender, RoutedEventArgs e)
             {
                 var dialog = new Microsoft.Win32.OpenFileDialog();
                 dialog.Filter = "Sve datoteke|*.*";
