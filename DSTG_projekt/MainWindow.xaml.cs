@@ -18,11 +18,11 @@ using System.IO;
             private string? Filepath { get; set; }
         private CSharpLoopAnalyzer cSharp { get; set; }
 
-            public Dictionary<string, string> langExtPairs = new Dictionary<string, string>();
+        public Dictionary<string, string> langExtPairs = new Dictionary<string, string>();
 
-            public List<string> pythonLoops = new List<string>();
-            public List<string> cSharpLoops = new List<string>();
-            public List<string> javaScriptLoops = new List<string>();
+        public List<string> pythonLoops = new List<string>();
+        public List<string> cSharpLoops = new List<string>();
+        public List<string> javaScriptLoops = new List<string>();
 
         private void btnAnalyze_Click(object sender, RoutedEventArgs e)
         {
