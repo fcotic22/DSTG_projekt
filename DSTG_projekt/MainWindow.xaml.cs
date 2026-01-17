@@ -1,11 +1,8 @@
-<<<<<<< HEAD
-﻿using System.Diagnostics;
-using System.IO;
-=======
+using System.Diagnostics;
+
 ﻿    using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
->>>>>>> d_python
     using System.Windows;
     using System.Windows.Controls;
     using DSTG_projekt.Services;
@@ -51,73 +48,49 @@ namespace DSTG_projekt
             FillDictionaryAndLoopTypes();
 
             string code = File.ReadAllText(Filepath);
+            
 
             if (txtPath.Text == string.Empty || cmbLanguage.SelectedIndex == -1)
             {
                 MessageBox.Show("Učitaj datoteku i odaberi jezik!");
                 return;
             
-<<<<<<< HEAD
-=======
-                }
-                else if(langExtPairs[cmbLanguage.SelectedValue.ToString()] != Path.GetExtension(Filepath))
-                {
-                    MessageBox.Show($"Odabrani jezik i tip datoteke se ne poklapaju! {langExtPairs[chosenLang]} - {Path.GetExtension(Filepath)}");
-                    return;
-                }
-                else
-                {
-                    if (chosenLang == "Python")
-                    {
-                        StringBuilder sb = PythonService.AnalyzePythonCode(Filepath!);
-
-                        MessageBox.Show(sb.ToString(), "Python graf petlja–varijabla");
-                    }
-                    else if (chosenLang == "C#")
-                    {
-
-                    }
-                    else
-                    {
-                        //JavaScript
-
-
-                    }
-                }
-               
->>>>>>> d_python
             }
             else if(langExtPairs[cmbLanguage.SelectedValue.ToString()] != Path.GetExtension(Filepath))
             {
                 var chosenLang = cmbLanguage.SelectedValue.ToString();
+
                 MessageBox.Show($"Odabrani jezik i tip datoteke se ne poklapaju! {langExtPairs[chosenLang]} - {Path.GetExtension(Filepath)}");
                 return;
             }
             else
             {
                 var chosenLang = cmbLanguage.SelectedValue.ToString();
-            if (chosenLang == "Python")
-            {
-                    
-            }
-            else if (chosenLang == "C#")
-            {
-                cSharp = new CSharpLoopAnalyzer();
-                var loops = cSharp.ExtractCSharpLoops(code);
-                cSharp.CategorizeCSharpLoops(loops);
-                cSharp.AnalyzeAllCSharpLoops(chosenLang);
-                cSharp.helperFunctions.CreateMessageBoxLoopsInfo();
-            }
-            else
 
-            {
-                //JavaScript
+                if (chosenLang == "Python")
+                {
+                    StringBuilder sb = PythonService.AnalyzePythonCode(Filepath!);
+
+                    MessageBox.Show(sb.ToString(), "Python graf petlja–varijabla");
+                }
+                else if (chosenLang == "C#")
+                {
+                    cSharp = new CSharpLoopAnalyzer();
+                    var loops = cSharp.ExtractCSharpLoops(code);
+                    cSharp.CategorizeCSharpLoops(loops);
+                    cSharp.AnalyzeAllCSharpLoops(chosenLang);
+                    cSharp.helperFunctions.CreateMessageBoxLoopsInfo();
+                }
+                else
+                {
+                    //JavaScript
 
 
+                }
+                }
             }
-        }
-               
-        }
+           
+      
 
 
 
