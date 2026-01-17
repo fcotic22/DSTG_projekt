@@ -66,6 +66,7 @@ using System.IO;
                 var loops = javaScript.ExtractJavaScriptLoops(code);
                 javaScript.CategorizeJavaScriptLoops(loops);
                 javaScript.AnalyzeAllJavaScriptLoops(chosenLang);
+                javaScript.AnalyzeAllJavaScriptVariables(code);
                 javaScript.helperFunctions.CreateMessageBoxLoopsInfo();
             }
         }
