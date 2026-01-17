@@ -1,14 +1,36 @@
+<<<<<<< HEAD
 ﻿using System.Diagnostics;
 using System.IO;
+=======
+﻿    using System.IO;
+    using System.Text;
+    using System.Text.RegularExpressions;
+>>>>>>> d_python
     using System.Windows;
     using System.Windows.Controls;
+    using DSTG_projekt.Services;
 
-    namespace DSTG_projekt
+namespace DSTG_projekt
     {
-        /// <summary>
-        /// Interaction logic for MainWindow.xaml
-        /// </summary>
-        public partial class MainWindow : Window
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    /// 
+
+    public class LoopNode
+    {
+        public int Id { get; set; }
+        public string LoopType { get; set; } = "";
+        public HashSet<string> Variables { get; set; } = new();
+    }
+
+
+    public class LoopVariableGraph
+    {
+        public Dictionary<int, LoopNode> Loops { get; set; } = new();
+    }
+
+    public partial class MainWindow : Window
         {
             public MainWindow()
             {
@@ -35,6 +57,35 @@ using System.IO;
                 MessageBox.Show("Učitaj datoteku i odaberi jezik!");
                 return;
             
+<<<<<<< HEAD
+=======
+                }
+                else if(langExtPairs[cmbLanguage.SelectedValue.ToString()] != Path.GetExtension(Filepath))
+                {
+                    MessageBox.Show($"Odabrani jezik i tip datoteke se ne poklapaju! {langExtPairs[chosenLang]} - {Path.GetExtension(Filepath)}");
+                    return;
+                }
+                else
+                {
+                    if (chosenLang == "Python")
+                    {
+                        StringBuilder sb = PythonService.AnalyzePythonCode(Filepath!);
+
+                        MessageBox.Show(sb.ToString(), "Python graf petlja–varijabla");
+                    }
+                    else if (chosenLang == "C#")
+                    {
+
+                    }
+                    else
+                    {
+                        //JavaScript
+
+
+                    }
+                }
+               
+>>>>>>> d_python
             }
             else if(langExtPairs[cmbLanguage.SelectedValue.ToString()] != Path.GetExtension(Filepath))
             {
@@ -68,7 +119,9 @@ using System.IO;
                
         }
 
-            private void btnSelectDocument_Click(object sender, RoutedEventArgs e)
+
+
+        private void btnSelectDocument_Click(object sender, RoutedEventArgs e)
             {
                 var dialog = new Microsoft.Win32.OpenFileDialog();
                 dialog.Filter = "Sve datoteke|*.*";
