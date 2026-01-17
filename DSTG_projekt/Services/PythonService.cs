@@ -46,7 +46,7 @@ namespace DSTG_projekt.Services
             return sb;
         }
 
-        
+
         private static LoopVariableGraph AnalyzePythonLoopsAsGraph(string path)
         {
             var lines = File.ReadAllLines(path);
@@ -126,6 +126,11 @@ namespace DSTG_projekt.Services
             {
                 var line = CleanPythonLine(rawLine);
 
+
+                var attributeNames = Regex.Matches(rawLine, @"\.\s*([a-zA-Z_][a-zA-Z0-9_]*)")
+                              .Select(m => m.Groups[1].Value)
+                              .ToHashSet();
+
                 foreach (var v in ExtractBaseVariables(rawLine))
                 {
                     if (!IsPythonKeyword(v))
@@ -139,7 +144,10 @@ namespace DSTG_projekt.Services
                     if (IsPythonKeyword(token))
                         continue;
 
-                    if (Regex.IsMatch(line, $@"\b{token}\s*\(") && !Regex.IsMatch(rawLine, $@"\b{token}\s*\."))
+                    if (Regex.IsMatch(rawLine, $@"\b{token}\s*\("))
+                        continue;
+
+                    if (attributeNames.Contains(token))
                         continue;
 
                     variables.Add(token);
@@ -151,6 +159,7 @@ namespace DSTG_projekt.Services
 
         private static string CleanPythonLine(string line)
         {
+            line = Regex.Replace(line, @"\bf(['""])(?:(?=(\\?))\2.)*?\1", "");
             line = Regex.Replace(line, @"(['""])(?:(?=(\\?))\2.)*?\1", "");
             line = Regex.Replace(line, @"\[[^\]]*\]", "");
             line = Regex.Replace(line, @"\.[a-zA-Z_][a-zA-Z0-9_]*", "");
@@ -186,7 +195,8 @@ namespace DSTG_projekt.Services
             var right = match.Groups[2].Value.Trim();
             right = right.Split('[')[0].Trim();
 
-            vars.Add(right);
+            if (!Regex.IsMatch(right, @"\w+\s*\("))
+                vars.Add(right);
 
             return vars;
         }
@@ -211,14 +221,17 @@ namespace DSTG_projekt.Services
         {
             string[] keywords =
             {
-                "for", "while", "if", "elif", "else",
+                "for", "while", "if", "elif", "else", "with",
                 "try", "except", "finally",
                 "in", "and", "or", "not", "is",
                 "return", "break", "continue", "pass",
                 "int", "float", "str", "bool", "list", "dict", "set", "tuple",
                 "Exception", "exception", "as",
                 "iloc",
-                "None", "True", "False"
+                "None", "True", "False",
+                "range", "len", "print", "enumerate", "zip",
+                "map", "filter", "sum", "min", "max", "abs",
+                "open", "sorted", "any", "all"
             };
 
             return keywords.Contains(token);
