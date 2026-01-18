@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Text;
     using System.Windows;
     using System.Windows.Controls;
+    using DSTG_projekt.Services;
 
     namespace DSTG_projekt
     {
@@ -48,7 +50,8 @@ using System.IO;
                 var chosenLang = cmbLanguage.SelectedValue.ToString();
             if (chosenLang == "Python")
             {
-                    
+                StringBuilder sb = PythonService.AnalyzePythonCode(Filepath);
+                MessageBox.Show(sb.ToString(), "Python graf petlja–varijabla");
             }
             else if (chosenLang == "C#")
             {
